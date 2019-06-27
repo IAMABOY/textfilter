@@ -11,9 +11,7 @@ __date__ = '2012.01.05'
 class NaiveFilter():
 
     '''Filter Messages from keywords
-
     very simple filter implementation
-
     >>> f = NaiveFilter()
     >>> f.add("sexy")
     >>> f.filter("hello sexy baby")
@@ -37,9 +35,7 @@ class NaiveFilter():
 class BSFilter:
 
     '''Filter Messages from keywords
-
     Use Back Sorted Mapping to reduce replacement times
-
     >>> f = BSFilter()
     >>> f.add("sexy")
     >>> f.filter("hello sexy baby")
@@ -90,9 +86,7 @@ class BSFilter:
 class DFAFilter():
 
     '''Filter Messages from keywords
-
     Use DFA to keep algorithm perform constantly
-
     >>> f = DFAFilter()
     >>> f.add("sexy")
     >>> f.filter("hello sexy baby")
@@ -137,6 +131,7 @@ class DFAFilter():
         message = message.lower()
         ret = []
         start = 0
+        haveSensitiveWord = False
         while start < len(message):
             level = self.keyword_chains
             step_ins = 0
@@ -148,6 +143,7 @@ class DFAFilter():
                     else:
                         ret.append(repl * step_ins)
                         start += step_ins - 1
+                        haveSensitiveWord = True
                         break
                 else:
                     ret.append(message[start])
@@ -156,7 +152,7 @@ class DFAFilter():
                 ret.append(message[start])
             start += 1
 
-        return ''.join(ret)
+        return ''.join(ret),haveSensitiveWord
 
 
 def test_first_character():
@@ -165,17 +161,55 @@ def test_first_character():
     assert gfw.filter("1989", "*") == "1989"
 
 
+def xlsxReader(inputExcelFilePath,allXlsxData):
+    
+    import pandas as pd
+
+    readerDataFrame=pd.read_excel(inputExcelFilePath)
+
+    for i in readerDataFrame.index.values:#获取行号的索引，并对其进行遍历,根据i来获取每一行指定的数据 并利用to_dict转成字典
+
+        proto_desc=readerDataFrame.ix[i,1]
+
+        if type(proto_desc) is unicode and proto_desc != ' ':
+            allXlsxData.append(proto_desc)
+
+        #if i > 2:
+            #break
+#如果发现某个词语不适合，定位其在keywords中哪一行并将其删除
+def checkSpecialChar(path):
+    with open(path) as f:
+         for (num,value) in enumerate(f):
+            keyword = value.strip()
+
+            if not isinstance(keyword, unicode):
+                keyword = keyword.decode('utf-8')
+            keyword = keyword.lower()
+            chars = keyword.strip()
+            if not chars:
+                return
+            if chars == u'删除':
+                print('special char',num)
+
 if __name__ == "__main__":
     # gfw = NaiveFilter()
     # gfw = BSFilter()
     gfw = DFAFilter()
     gfw.parse("keywords")
+
+    allXlsxData = []
+    inputExcelFilePath = "web.xlsx"
+    xlsxReader(inputExcelFilePath,allXlsxData)
+
     import time
     t = time.time()
-    print gfw.filter("法轮功 我操操操", "*")
-    print gfw.filter("针孔摄像机 我操操操", "*")
-    print gfw.filter("售假人民币 我操操操", "*")
-    print gfw.filter("传世私服 我操操操", "*")
+    
+    for item in allXlsxData:
+        replacement,haveSensitiveWord = gfw.filter(item, "*")
+        if haveSensitiveWord:
+            print(item)
+            print(replacement)
+            print('-'*80)
+            
     print time.time() - t
-
-    test_first_character()
+    checkSpecialChar("keywords")

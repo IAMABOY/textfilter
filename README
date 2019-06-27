@@ -1,9 +1,3 @@
-很短但是觉得挺有用的东东
-所以单独立了个项目备份一下
+实现了三种敏感词过滤的方法NaiveFilter, BSFilter, DFAFilter，最常用的是DFA算法。
+以读取一个xlsx文件的某一列为例，对于其中的敏感词进行替换成*,打印输出。
 
-USAGE:
-
-    >>> f = DFAFilter()
-    >>> f.add("sexy")
-    >>> f.filter("hello sexy baby")
-    hello **** baby
